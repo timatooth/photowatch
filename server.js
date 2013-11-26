@@ -1,7 +1,7 @@
 /**
  * Photo Watch Server
  * @author Tim Sullivan <tim@timatooth.com>
- * @license WTFPL
+ * @license MIT
  */
 var http = require('http')
 var express = require('express'), app = express();

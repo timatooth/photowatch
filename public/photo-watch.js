@@ -1,7 +1,7 @@
 /**
 * Photo Watch Client
 * @author Tim Sullivan <tim@timatooth.com>
-* @license WTFPL
+* @license MIT
 */
 
 var socket = io.connect();

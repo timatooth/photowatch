@@ -1,3 +1,8 @@
 *~
-public/photos/*
+public/photos/*.jpg
+public/photos/*.png
+public/photos/*.gif
+public/photos/*.JPG
+public/photos/*.PNG
+public/photos/*.GIF
 .DS_Store
