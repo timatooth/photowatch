@@ -5,7 +5,35 @@ body {
     background-color: #111;
 }
 
+.photoBack {
+    position: relative;
+    width: 900px; /* Grr */
+    padding: 0px;
+    margin: 0px;
+}
+
 .photoArea img {
     max-width: 100%;
     height: auto;
+}
+
+.photoMeta {
+    position: absolute;
+    bottom: 2px;
+    left: 1px;
+    width: 100%;
+    height: 40px;
+    background-color: #222;
+    opacity: 0.5;
+    padding: 0px;
+    padding: 0px;
+    margin: 0px;
+}
+.photo {
+    border: 1px solid #555;
+}
+
+.photoMetaText{
+    margin: 10px;
+    text-align: right;
 }

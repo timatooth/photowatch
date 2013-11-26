@@ -2,6 +2,6 @@ Photowatch as the name suggests, watches a directory on a system
 and emits events to connected websocket clients for a live updating photo
 feed.
 
-Modules used: express, jade, socket.io, watch
+Modules used: express, jade, socket.io, watch, exif
 
 Author: Tim Sullivan <tim@timatooth.com>
