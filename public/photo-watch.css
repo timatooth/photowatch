@@ -1,0 +1,11 @@
+body {
+    font-family: sans-serif;
+    font-weight: 100;
+    color: #eee;
+    background-color: #111;
+}
+
+.photoArea img {
+    max-width: 100%;
+    height: auto;
+}
