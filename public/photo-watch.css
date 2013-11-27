@@ -3,6 +3,8 @@ body {
     font-weight: 100;
     color: #eee;
     background-color: #111;
+    width: 90%;
+    margin: auto;
 }
 
 .photoBack {
@@ -10,6 +12,7 @@ body {
     width: 900px; /* Grr */
     padding: 0px;
     margin: 0px;
+    margin-bottom: 20px;
 }
 
 .photoArea img {

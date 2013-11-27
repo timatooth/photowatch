@@ -26,19 +26,6 @@ app.get('/', function(req, res){
 io.sockets.on('connection', function(socket){
     //register events on connection
     console.log("Got new connection!");
-
-    socket.on('setPseudo', function(data){
-	socket.set('pseudo', data);
-    });
-
-    socket.on('message', function (message) {
-	socket.get('pseudo', function (error, name) {
-	    var data = { 'message' : message, pseudo : name };
-	    socket.broadcast.emit('message', data);
-	    console.log(name + ": " + message);
-	})
-    });
-    
 });
 
 watch.createMonitor(__dirname + '/public/photos',
@@ -49,7 +36,7 @@ watch.createMonitor(__dirname + '/public/photos',
 			    //this is a work-around on osx for the event double firing bug.
 			    if (monitor.files[f] === undefined && isExtOk(f)) {
 				//
-				setTimeout(loadImageMeta, 1000, f);
+				setTimeout(loadImageMeta, 15000, f);
 			    }
 			    
 			})
@@ -96,11 +83,10 @@ function loadImageMeta(filename) {
             if (error){
 		console.log('Error reading EXIF: ' + error.message);
 	    } else {
-		console.log(exifData);
 		photo.exif = {
 		    FNumber: exifData.exif['FNumber'],
 		    ISO: exifData.exif['ISO'],
-		    ExposureTime: Math.round(exifData.exif['ExposureTime'] * 100) / 100
+		    ExposureTime: String(exifData.exif['ExposureTime']).slice(0, 4)
 		};
 	    }
 	    broadcastPhoto(photo);
