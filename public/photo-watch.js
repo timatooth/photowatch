@@ -6,6 +6,9 @@
 
 var socket = io.connect();
 var lastImage;
+var imageQueue = [];
+var queueFlushState = false;
+var deferTime = 3000;
 
 socket.on('new-photo', function(photo) {
 
@@ -19,24 +22,32 @@ socket.on('new-photo', function(photo) {
 	//title: '',
 	class: 'photo',
     }).appendTo(photoBack).hide();
+
     $(img).load(function(){
-	//still buggy will deal to later
-	newDate = new Date();
-	newDate.setSeconds(newDate.getSeconds() - 3);
-	if(lastImage < newDate){
-	    $(this).fadeIn("slow");
-	    lastImage = new Date();
+	var now = new Date();
+	if(lastImage.getTime() < now.getTime() - deferTime){
+	    $(this).fadeIn("slow", addMeta(photo, photoBack));
+	    lastImage = now;
 	} else {
-	    //defer the loading of a new image by 3 seconds.
-	    setTimeout(function(obj){
-		//alert('deferred called');
-		$(obj).fadeIn();
-	    }, 3000, $(this));
+	    var obj = {
+		jqueryObj: $(this),
+		photo: photo,
+		photoBack: photoBack };
+
+	    imageQueue.push(obj);
+
+	    if(!queueFlushState){
+		setTimeout(imageQueueFlusher, deferTime);
+		queueFlushState = true;
+	    }
 	}
     });
-    
+});
+
+function addMeta(photo, photoBack){
+    var photoMeta;
     if(photo.exif){
-	var photoMeta = $('<div/>', {
+	photoMeta = $('<div/>', {
 	    class: 'photoMeta',
 	}).appendTo(photoBack);
 	
@@ -48,13 +59,23 @@ socket.on('new-photo', function(photo) {
 	    html: s + "s <em>f</em> "+f+" ISO"+iso,
 	    class: 'photoMetaText',
 	}).appendTo(photoMeta);
+	$(photoMeta).fadeIn("slow");
     }
+}
 
-    
-});
+function imageQueueFlusher(){
+    if(imageQueue.length == 0){
+	queueFlushState = false;
+	return;
+    }
+    var obj = imageQueue.shift();
+    var image = obj.jqueryObj;
+    $(image).fadeIn("slow", addMeta(obj.photo, obj.photoBack));
+    setTimeout(imageQueueFlusher, deferTime);
+}
 
 $(function(){
     //set a date of last image to be in the past.
-    lastImage = new Date()
+    lastImage = new Date();
     lastImage.setSeconds(lastImage.getSeconds() - 10);
 });

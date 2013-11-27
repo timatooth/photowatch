@@ -6,6 +6,11 @@ body {
     width: 90%;
     margin: auto;
 }
+.subtext {
+    font-size: 0.8em;
+    color: #aaa;
+    text-transform: uppercase;
+}
 
 .photoBack {
     position: relative;
