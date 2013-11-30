@@ -10,7 +10,7 @@ var jade = require('jade');
 var io = require('socket.io').listen(server);
 var watch = require('watch'); //https://github.com/mikeal/watch
 var path = require('path');
-var ExifImage = require('exif').ExifImage; //https://github.com/gomfunkel/node-exif
+var ex = require('exiv2'); //https://github.com/dberesford/exiv2node/
 
 app.set('views', __dirname + '/views');
 app.set('view engine', 'jade');
@@ -36,7 +36,7 @@ watch.createMonitor(__dirname + '/public/photos',
 			    //this is a work-around on osx for the event double firing bug.
 			    if (monitor.files[f] === undefined && isExtOk(f)) {
 				//
-				setTimeout(loadImageMeta, 15000, f);
+				setTimeout(loadImageMeta, 1000, f);
 			    }
 			    
 			})
@@ -74,26 +74,32 @@ function isExtOk(filename){
 function loadImageMeta(filename) {
     var photo = {
 	filename: filename,
-	exif: {},
+	exif: null,
 	iptc: null
     };
     
-    try {
-	new ExifImage({ image : filename }, function (error, exifData) {
-            if (error){
-		console.log('Error reading EXIF: ' + error.message);
-	    } else {
-		photo.exif = {
-		    FNumber: exifData.exif['FNumber'],
-		    ISO: exifData.exif['ISO'],
-		    ExposureTime: String(exifData.exif['ExposureTime']).slice(0, 4)
-		};
-	    }
-	    broadcastPhoto(photo);
-	});
-    } catch (error) {
-	console.log('Caught EXIF Error: ' + error.message);
-    }
+    ex.getImageTags(filename, function(err, tags) {
+	if(err != null ){
+	    console.log("Error reading image metadata. Details:");
+	    console.log(err);
+	}
+	
+	var exif = {
+	    ExposureTime: tags['Exif.Photo.ExposureTime'],
+	    FNumber: tags['Exif.Photo.FNumber'],
+	    ISO: tags['Exif.Photo.ISOSpeedRatings']
+	};
+
+	var iptc = {
+	    ObjectName: tags['Iptc.Application2.ObjectName'],
+	    Caption: tags['Iptc.Application2.Caption'],
+	    Byline: tags['Iptc.Application2.Byline']
+	}
+
+	photo.exif = exif;
+	photo.iptc = iptc;
+	console.log(photo);
+	broadcastPhoto(photo);
+    });
     
-    //broadcastPhoto(photo);
 }

@@ -11,28 +11,32 @@ var queueFlushState = false;
 var deferTime = 3000;
 
 socket.on('new-photo', function(photo) {
-
     var photoBack = $('<div/>', {
 	class: 'photoBack',
     }).prependTo('.photoArea');
 
+    var title = ((photo.iptc.ObjectName != null) ? photo.iptc.ObjectName : "");
     var img = $('<img/>', {
-	//id: 'foo', TODO - METADATA
 	src: photo['url'],
-	//title: '',
+	title: title,
 	class: 'photo',
+	alt: title
     }).appendTo(photoBack).hide();
 
     $(img).load(function(){
 	var now = new Date();
+
+	//if last image was more than deferTime ms ago:
 	if(lastImage.getTime() < now.getTime() - deferTime){
 	    $(this).fadeIn("slow", addMeta(photo, photoBack));
 	    lastImage = now;
-	} else {
+
+	} else { //defer the load of the image by adding it to queue data struct.
 	    var obj = {
 		jqueryObj: $(this),
 		photo: photo,
-		photoBack: photoBack };
+		photoBack: photoBack 
+	    };
 
 	    imageQueue.push(obj);
 
@@ -46,21 +50,53 @@ socket.on('new-photo', function(photo) {
 
 function addMeta(photo, photoBack){
     var photoMeta;
-    if(photo.exif){
+    if(photo.iptc || photo.exif){
 	photoMeta = $('<div/>', {
 	    class: 'photoMeta',
 	}).appendTo(photoBack);
-	
+    }
+
+    if(photo.exif){
 	var f = ((photo.exif.FNumber != null ) ? photo.exif.FNumber : "-");
+	var fspl = f.split("/");
+	if(f != "-") {
+	    f = Number(fspl[0]) / Number(fspl[1]);
+	}
 	var iso = ((photo.exif.ISO != null ) ? photo.exif.ISO : "-");
 	var s = ((photo.exif.ExposureTime != null ) ? photo.exif.ExposureTime : "-");
+	var spl = s.split("/");
+	if(spl[1] == "1"){
+	    s = spl[0];
+	}
 	
 	$('<div/>', {
 	    html: s + "s <em>f</em> "+f+" ISO"+iso,
-	    class: 'photoMetaText',
+	    class: 'photoExifText',
 	}).appendTo(photoMeta);
-	$(photoMeta).fadeIn("slow");
     }
+    
+    if(photo.iptc){
+	var title = ((photo.iptc.ObjectName != null ) ? photo.iptc.ObjectName : "");
+	var author = ((photo.iptc.Byline != null ) ? photo.iptc.Byline : "Unknown Author");
+	var caption = ((photo.iptc.Caption != null ) ? photo.iptc.Caption : "");
+	
+	$('<div/>', {
+	    html: author,
+	    class: 'photoAuthorText'
+	}).appendTo(photoMeta);
+
+	$('<div/>', {
+	    html: title,
+	    class: 'photoTitleText'
+	}).appendTo(photoMeta);
+
+	$('<div/>', {
+	    html: caption,
+	    class: 'photoCaptionText'
+	}).appendTo(photoMeta);
+    }
+    
+    $(photoMeta).fadeIn("slow");
 }
 
 function imageQueueFlusher(){
