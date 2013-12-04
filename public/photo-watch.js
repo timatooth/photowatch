@@ -15,6 +15,9 @@ socket.on('new-photo', function(photo) {
 	class: 'photoBack',
     }).prependTo('.photoArea');
 
+    /* Provide actual width to picture */
+    $(photoBack).css({"max-width": photo.width});
+
     var title = ((photo.iptc.ObjectName != null) ? photo.iptc.ObjectName : "");
     var img = $('<img/>', {
 	src: photo['url'],

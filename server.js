@@ -10,7 +10,8 @@ var jade = require('jade');
 var io = require('socket.io').listen(server);
 var watch = require('watch'); //https://github.com/mikeal/watch
 var path = require('path');
-var ex = require('exiv2'); //https://github.com/dberesford/exiv2node/
+var exiv2 = require('exiv2'); //https://github.com/dberesford/exiv2node/
+var PHOTOWATCH_DELAY = 0;
 
 app.set('views', __dirname + '/views');
 app.set('view engine', 'jade');
@@ -36,25 +37,19 @@ watch.createMonitor(__dirname + '/public/photos',
 			    //this is a work-around on osx for the event double firing bug.
 			    if (monitor.files[f] === undefined && isExtOk(f)) {
 				//
-				setTimeout(loadImageMeta, 1000, f);
+				setTimeout(loadImageMeta,
+					   PHOTOWATCH_DELAY, {
+					       filename: f,
+					       callback: broadcastPhoto
+					   });
 			    }
 			    
 			})
-			monitor.on("changed", function (f, curr, prev) {
-			    // Handle file changes
-			})
-			monitor.on("removed", function (f, stat) {
-			    // Handle removed files
-			})
-		    })
+		    });
 
 function broadcastPhoto(photo){
-    var toSend = {
-	url:  path.relative(path.join(__dirname, "public"), photo['filename']),
-	exif: photo.exif,
-	iptc: photo['iptc']
-    };
-    io.sockets.emit('new-photo', toSend);
+    photo.url = path.relative(path.join(__dirname, "public"), photo['filename']);
+    io.sockets.emit('new-photo', photo);
 }
 
 function isExtOk(filename){
@@ -69,37 +64,40 @@ function isExtOk(filename){
 
 /**
 * Build JSON data structure containing EXIF & IPTC information for transmission
-* @param filename The valid filename of image to fetch metadata.
+* @param args Object containing filename and callback.
 */
-function loadImageMeta(filename) {
+function loadImageMeta(args, callback) {
     var photo = {
-	filename: filename,
+	filename: args.filename,
 	exif: null,
-	iptc: null
+	iptc: null,
     };
     
-    ex.getImageTags(filename, function(err, tags) {
+    exiv2.getImageTags(args.filename, function(err, tags) {
 	if(err != null ){
 	    console.log("Error reading image metadata. Details:");
 	    console.log(err);
 	}
 	
-	var exif = {
+	photo.exif = {
 	    ExposureTime: tags['Exif.Photo.ExposureTime'],
 	    FNumber: tags['Exif.Photo.FNumber'],
 	    ISO: tags['Exif.Photo.ISOSpeedRatings']
 	};
 
-	var iptc = {
+	photo.iptc = {
 	    ObjectName: tags['Iptc.Application2.ObjectName'],
 	    Caption: tags['Iptc.Application2.Caption'],
 	    Byline: tags['Iptc.Application2.Byline']
 	}
 
-	photo.exif = exif;
-	photo.iptc = iptc;
-	console.log(photo);
-	broadcastPhoto(photo);
+	photo.width = 900; //FIXME: Get image dimensions.
+
+	if (args.callback){
+	    args.callback(photo);
+	} else if (callback){
+	    callback(photo);
+	}
     });
     
 }
